@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualisations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav>
+  <h1>📚 Visualisations</h1>
+  <h2>Computer Vision</h2>
+  <a href="#low-pass">Low-Pass Filter</a>
+  <a href="#harris-sift">Harris vs SIFT</a>
+  <a href="#sift-pipeline">SIFT Pipeline</a>
+  <!-- NEW CV LINKS HERE -->
+
+  <h2>Machine Learning</h2>
+  <!-- NEW ML LINKS HERE -->
+</nav>
+
+<main>
+
+<!-- ══════════ COMPUTER VISION ══════════ -->
+
+<section id="low-pass">
+  <h2>Low-Pass Filter</h2>
+  <p class="desc">Blur & Noise Removal</p>
+  <div class="viz">
+    <div class="lpf-wrap">
+      <h1>Low-Pass Filter</h1>
+      <p class="lpf-subtitle">// blur &amp; noise removal</p>
+
+      <div class="lpf-controls">
+        <div class="lpf-cgroup">
+          <label>Filter Type</label>
+          <select id="lpf-type">
+            <option value="box">Box (Mean)</option>
+            <option value="gaussian">Gaussian</option>
+          </select>
+        </div>
+        <div class="lpf-cgroup">
+          <label>Kernel</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="range" id="lpf-ksize" min="1" max="5" step="2" value="3">
+            <span class="lpf-val" id="lpf-kval">3×3</span>
+          </div>
+        </div>
+        <div class="lpf-cgroup">
+          <label>Noise</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="range" id="lpf-noise" min="0" max="200" value="80">
+            <span class="lpf-val" id="lpf-nval">80</span>
+          </div>
+        </div>
+        <div class="lpf-cgroup">
+          <label>&nbsp;</label>
+          <button class="lpf-btn" id="lpf-regen">↻ New</button>
+        </div>
+      </div>
+
+      <div class="lpf-row">
+        <div class="lpf-box">
+          <span class="lpf-clabel orig">Original + Noise</span>
+          <canvas id="lpf-orig" width="200" height="200"></canvas>
+          <p class="lpf-desc">High-frequency noise overlays the image</p>
+        </div>
+        <div class="lpf-arrow">→</div>
+        <div class="lpf-box">
+          <span class="lpf-clabel kern">Kernel</span>
+          <div id="lpf-kdisplay" class="lpf-kgrid"></div>
+          <p class="lpf-desc">Weight matrix – slid over each pixel</p>
+        </div>
+        <div class="lpf-arrow">→</div>
+        <div class="lpf-box">
+          <span class="lpf-clabel filt">Filtered</span>
+          <canvas id="lpf-filt" width="200" height="200"></canvas>
+          <p class="lpf-desc">Noise removed, low frequencies preserved</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="harris-sift">
+  <h2>Harris Corner Detector vs SIFT</h2>
+  <p class="desc">Visual comparison: How do both detectors respond to different scenarios?</p>
+  <div class="viz">
+    <div class="hs-section">
+      <div class="scene-container">
+
+        <!-- Scenario 1: Basic Detection -->
+        <div class="scene">
+          <div class="scene-title">Scenario 1 — Basic Detection</div>
+          <div class="scene-desc">Simple building: corners, edges, and a round blob. Same scale.</div>
+          <div class="comparison-row">
+            <div class="detector-panel harris">
+              <div class="detector-label">Harris Corner Detector</div>
+              <canvas id="s1-harris" width="380" height="260"></canvas>
+              <div class="result-text">Detects <strong>corners</strong> (where gradients are strong in two directions). Ignores the blob and edges.</div>
+              <div class="verdict good">✓ Corners clearly detected</div>
+            </div>
+            <div class="detector-panel sift">
+              <div class="detector-label">SIFT</div>
+              <canvas id="s1-sift" width="380" height="260"></canvas>
+              <div class="result-text">DoG responds to <strong>corners and the blob</strong> — anything locally high-contrast. More features overall.</div>
+              <div class="verdict good">✓ Corners + blob detected</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario 2: Scale Change -->
+        <div class="scene">
+          <div class="scene-title">Scenario 2 — Scale Change (Zoom)</div>
+          <div class="scene-desc">Same building, but captured from two different distances. Can the detectors re-find the same points?</div>
+          <div class="comparison-row">
+            <div class="detector-panel harris">
+              <div class="detector-label">Harris (fixed σ)</div>
+              <canvas id="s2-harris" width="380" height="260"></canvas>
+              <div class="result-text">Fixed σ → in the zoomed image Harris finds <strong>different corners</strong> or none at all. The previous building corner is now too large for the window.</div>
+              <div class="verdict bad">✗ Features not re-identified</div>
+            </div>
+            <div class="detector-panel sift">
+              <div class="detector-label">SIFT (Scale Space)</div>
+              <canvas id="s2-sift" width="380" height="260"></canvas>
+              <div class="result-text">Scale-space maximum → SIFT finds <strong>the same feature</strong> at a different σ. Characteristic scale enables matching.</div>
+              <div class="verdict good">✓ Features matched across scales</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario 3: Rotation -->
+        <div class="scene">
+          <div class="scene-title">Scenario 3 — Rotation</div>
+          <div class="scene-desc">Image rotated by 30°. Can features be re-identified?</div>
+          <div class="comparison-row">
+            <div class="detector-panel harris">
+              <div class="detector-label">Harris</div>
+              <canvas id="s3-harris" width="380" height="260"></canvas>
+              <div class="result-text">Harris is <strong>rotation invariant</strong> (eigenvalues don't change under rotation). Corners are re-found.</div>
+              <div class="verdict good">✓ Rotation invariant</div>
+            </div>
+            <div class="detector-panel sift">
+              <div class="detector-label">SIFT</div>
+              <canvas id="s3-sift" width="380" height="260"></canvas>
+              <div class="result-text">Also rotation invariant — additionally computes <strong>dominant orientation</strong>, allowing the descriptor to be normalised.</div>
+              <div class="verdict good">✓ Rotation invariant + orientation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario 4: Illumination Change -->
+        <div class="scene">
+          <div class="scene-title">Scenario 4 — Illumination Change</div>
+          <div class="scene-desc">Same subject, but significantly darker / different lighting.</div>
+          <div class="comparison-row">
+            <div class="detector-panel harris">
+              <div class="detector-label">Harris</div>
+              <canvas id="s4-harris" width="380" height="260"></canvas>
+              <div class="result-text">Weaker gradients → <strong>weaker response</strong>. Some corners fall below the threshold.</div>
+              <div class="verdict bad">✗ Some features lost</div>
+            </div>
+            <div class="detector-panel sift">
+              <div class="detector-label">SIFT</div>
+              <canvas id="s4-sift" width="380" height="260"></canvas>
+              <div class="result-text">SIFT descriptor is <strong>normalised</strong> (gradient histogram). Relative contrasts are preserved → robust matching.</div>
+              <div class="verdict good">✓ Normalisation compensates</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="hs-summary">
+          <h2>Summary</h2>
+          <div class="summary-grid">
+            <div class="summary-item harris-sum">
+              <h3>Harris Corner Detector</h3>
+              <p>Detects corners based on eigenvalues of the gradient matrix M. Simple, fast, but limited.</p>
+              <div style="margin-top: 10px;">
+                <span class="tag yes">Rotation ✓</span>
+                <span class="tag no">Scale ✗</span>
+                <span class="tag partial">Illumination ~</span>
+                <span class="tag no">Blobs ✗</span>
+              </div>
+              <p style="margin-top: 10px; color: #8b8fa3; font-size: 0.78rem;">Scale-Adapted Harris partially solves the scale problem, but lacks a robust descriptor.</p>
+            </div>
+            <div class="summary-item sift-sum">
+              <h3>SIFT</h3>
+              <p>Scale-space DoG detection + 128-dim descriptor with orientation normalisation. Robust overall package.</p>
+              <div style="margin-top: 10px;">
+                <span class="tag yes">Rotation ✓</span>
+                <span class="tag yes">Scale ✓</span>
+                <span class="tag yes">Illumination ✓</span>
+                <span class="tag yes">Blobs ✓</span>
+              </div>
+              <p style="margin-top: 10px; color: #8b8fa3; font-size: 0.78rem;">Slower, but significantly more robust for feature matching in practice.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sift-pipeline">
+  <h2>SIFT Pipeline</h2>
+  <p class="desc">Interactive walkthrough: 4 steps from image to feature descriptor</p>
+  <div class="viz">
+    <div class="sift-section">
+      <p class="sift-subtitle">Scale-Invariant Feature Transform — click through the steps or use the buttons</p>
+
+      <div class="pipeline-bar">
+        <div class="pip-step active" onclick="siftGoStep(0)">1. Scale Space<br>Extrema Detection</div>
+        <div class="pip-arrow">→</div>
+        <div class="pip-step" onclick="siftGoStep(1)">2. Keypoint<br>Localisation</div>
+        <div class="pip-arrow">→</div>
+        <div class="pip-step" onclick="siftGoStep(2)">3. Orientation<br>Assignment</div>
+        <div class="pip-arrow">→</div>
+        <div class="pip-step" onclick="siftGoStep(3)">4. Keypoint<br>Descriptor</div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div class="step-panel visible" id="panel-0">
+        <div class="step-header">
+          <div class="step-badge">STEP 1</div>
+          <div class="step-name">Scale Space Extrema Detection</div>
+        </div>
+        <div class="step-goal">Goal: Find points that stand out both spatially AND across scale.</div>
+        <canvas id="sift-c1" width="860" height="300"></canvas>
+        <div class="substeps s1">
+          <div class="substep">
+            <div class="substep-num">a</div>
+            <div class="substep-text"><strong>Build Gaussian pyramid:</strong> Image is blurred with increasing σ → multiple octaves, each with several blur levels. Between octaves the image is halved (downsampling).</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">b</div>
+            <div class="substep-text"><strong>Compute DoG:</strong> Subtract adjacent Gaussian levels within each octave. Each DoG image reveals structures at a specific scale.</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">c</div>
+            <div class="substep-text"><strong>3×3×3 Extrema:</strong> Each pixel is compared with 26 neighbours (8 same level + 9 above + 9 below). Local maxima/minima → keypoint candidates.</div>
+          </div>
+        </div>
+        <div class="io-bar">
+          <div class="io-box io-in"><div class="io-label">Input</div>Original image I(x,y)</div>
+          <div class="io-box io-out"><div class="io-label">Output</div>Keypoint candidates (x, y, σ) — many, still imprecise</div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="panel-1">
+        <div class="step-header">
+          <div class="step-badge">STEP 2</div>
+          <div class="step-name">Keypoint Localisation</div>
+        </div>
+        <div class="step-goal">Goal: Eliminate imprecise and unstable candidates. Keep only robust keypoints.</div>
+        <canvas id="sift-c2" width="860" height="280"></canvas>
+        <div class="substeps s2">
+          <div class="substep">
+            <div class="substep-num">a</div>
+            <div class="substep-text"><strong>Sub-pixel accuracy:</strong> Taylor expansion of DoG around the extremum → interpolated position (x, y, σ) with sub-pixel accuracy.</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">b</div>
+            <div class="substep-text"><strong>Eliminate low contrast:</strong> If |D(x̂)| &lt; threshold (e.g. 0.03) → keypoint is too weak → remove.</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">c</div>
+            <div class="substep-text"><strong>Eliminate edges:</strong> DoG also responds strongly to edges. Check ratio of principal curvatures (Hessian matrix). If one direction dominates → edge → remove.</div>
+          </div>
+        </div>
+        <div class="io-bar">
+          <div class="io-box io-in"><div class="io-label">Input</div>Many keypoint candidates (x, y, σ)</div>
+          <div class="io-box io-out"><div class="io-label">Output</div>Filtered keypoints (x, y, σ) — fewer, but stable</div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="panel-2">
+        <div class="step-header">
+          <div class="step-badge">STEP 3</div>
+          <div class="step-name">Orientation Assignment</div>
+        </div>
+        <div class="step-goal">Goal: Assign an orientation to each keypoint → rotation invariance.</div>
+        <canvas id="sift-c3" width="860" height="280"></canvas>
+        <div class="substeps s3">
+          <div class="substep">
+            <div class="substep-num">a</div>
+            <div class="substep-text"><strong>Compute gradients:</strong> In the Gaussian level at the keypoint's σ: gradient magnitude m(x,y) and direction θ(x,y) for all pixels in the neighbourhood (radius ~1.5σ).</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">b</div>
+            <div class="substep-text"><strong>Build histogram:</strong> 36 bins (10° each). Each gradient is weighted by magnitude and Gaussian distance weighting.</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">c</div>
+            <div class="substep-text"><strong>Dominant orientation:</strong> Highest peak = dominant orientation θ. Peaks &gt; 80% of maximum generate additional keypoints (same position, different θ).</div>
+          </div>
+        </div>
+        <div class="io-bar">
+          <div class="io-box io-in"><div class="io-label">Input</div>Keypoints (x, y, σ)</div>
+          <div class="io-box io-out"><div class="io-label">Output</div>Keypoints (x, y, σ, θ) — now with orientation</div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-panel" id="panel-3">
+        <div class="step-header">
+          <div class="step-badge">STEP 4</div>
+          <div class="step-name">Keypoint Descriptor</div>
+        </div>
+        <div class="step-goal">Goal: Create a robust, comparable fingerprint for each keypoint.</div>
+        <canvas id="sift-c4" width="860" height="320"></canvas>
+        <div class="substeps s4">
+          <div class="substep">
+            <div class="substep-num">a</div>
+            <div class="substep-text"><strong>Align region:</strong> 16×16 pixel region around the keypoint, aligned to θ → rotation invariant.</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">b</div>
+            <div class="substep-text"><strong>4×4 subregions:</strong> The 16×16 region is divided into 4×4 = 16 subregions. In each: 8-bin gradient histogram (45° each).</div>
+          </div>
+          <div class="substep">
+            <div class="substep-num">c</div>
+            <div class="substep-text"><strong>128-dim vector:</strong> 16 subregions × 8 bins = 128 values. Normalised (unit length) → robust against illumination changes.</div>
+          </div>
+        </div>
+        <div class="io-bar">
+          <div class="io-box io-in"><div class="io-label">Input</div>Keypoints (x, y, σ, θ)</div>
+          <div class="io-box io-out"><div class="io-label">Output</div>128-dim descriptor per keypoint → ready for matching!</div>
+        </div>
+      </div>
+
+      <div class="nav-btns">
+        <button class="nav-btn" id="sift-btn-prev" onclick="siftPrev()" disabled>← Back</button>
+        <button class="nav-btn" id="sift-btn-next" onclick="siftNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADD NEW SECTIONS HERE -->
+
+</main>
+
+<script src="js/low-pass-filter.js"></script>
+<script src="js/harris-vs-sift.js"></script>
+<script src="js/sift-pipeline.js"></script>
+
+</body>
+</html>
