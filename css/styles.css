@@ -161,7 +161,7 @@ section h2 { margin-bottom: 8px; }
 .sa-desc { color: #8b8fa8; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.5rem; }
 .sa-desc strong { color: #e4e6f0; }
 .sa-analogy { background: #232736; border-left: 3px solid #facc15; padding: 0.8rem 1rem; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; font-size: 0.85rem; color: #8b8fa8; line-height: 1.5; }
-.sa-analogy::before { content: '💡 Analogy: '; color: #facc15; font-weight: 600; }
+.sa-analogy::before { content: '\1F4A1  Analogy: '; color: #facc15; font-weight: 600; }
 .sa-visual { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .sa-matrix-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: center; }
 .sa-vec { display: flex; flex-direction: column; gap: 3px; padding: 0.5rem; border-radius: 8px; border: 1px solid #2e3348; background: #232736; min-width: 52px; align-items: center; transition: all 0.3s; }
